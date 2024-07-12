@@ -12,7 +12,7 @@ public interface AuthKeyRepository extends JpaRepository<AuthKey, String> {
 
     @Query("SELECT ak FROM AuthKey ak WHERE ak.key = :key")
     AuthKey findByKey(@Param("key") String key);
-
+    
     @Query("SELECT ak FROM AuthKey ak WHERE ak.organisationName = :organisationName")
     AuthKey findByOrganisationName(@Param("organisationName") String organisationName);
 }

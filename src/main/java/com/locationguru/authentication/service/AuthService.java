@@ -28,24 +28,27 @@ public class AuthService {
 
 
     public String createKey(String organisationName) {
+        AuthKey existingKey = authKeyRepository.findByOrganisationName(organisationName);
+        if (existingKey != null) {
+            throw new IllegalStateException("Key for this organisation already exists, please delete it to create a new key.");
+        }
+
         String generatedKey = generateRandomKey();
-        
-        // Create AuthKey instance
+
         AuthKey authKey = new AuthKey();
-        authKey.setId(generateId()); 
+        authKey.setId(generateId());
         authKey.setKey(generatedKey);
         authKey.setOrganisationName(organisationName);
-        authKey.setActive(true);  
-        
+        authKey.setActive(true);
+
         authKeyRepository.save(authKey);
-        
-        return generatedKey; 
+
+        return generatedKey;
     }
-    
+
     protected String generateId() {
         return UUID.randomUUID().toString();
     }
-
 
     protected String generateRandomKey() {
         SecureRandom secureRandom = new SecureRandom();

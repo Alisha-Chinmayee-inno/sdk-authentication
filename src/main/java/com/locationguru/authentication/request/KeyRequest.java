@@ -4,8 +4,20 @@ public class KeyRequest {
 
     private String key;
     private String organisationName;
+    
+    
 
-    public String getKey() {
+    public KeyRequest() {
+		super();
+	}
+
+	public KeyRequest(String key, String organisationName) {
+		super();
+		this.key = key;
+		this.organisationName = organisationName;
+	}
+
+	public String getKey() {
         return key;
     }
 

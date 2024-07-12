@@ -1,21 +1,14 @@
 package com.locationguru.authentication.controller;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.locationguru.authentication.model.AuthKey;
+import org.springframework.web.bind.annotation.*;
 import com.locationguru.authentication.request.KeyRequest;
 import com.locationguru.authentication.request.OrganisationIdRequest;
 import com.locationguru.authentication.service.AuthService;
+import com.locationguru.authentication.response.AuthResponse;
+import com.locationguru.authentication.model.AuthKey;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -25,42 +18,54 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/validate")
-    public ResponseEntity<?> validateKey(@RequestBody KeyRequest keyRequest) {
+    public ResponseEntity<AuthResponse> validateKey(@RequestBody KeyRequest keyRequest) {
+        if (keyRequest == null || keyRequest.getKey() == null || keyRequest.getKey().isEmpty()) {
+            return ResponseEntity.ok().body(new AuthResponse(400, "Key cannot be empty"));
+        }
+
         if (authService.validateKey(keyRequest.getKey())) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new AuthResponse(200, ""));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid key");
+            return ResponseEntity.ok().body(new AuthResponse(401, "Invalid key"));
         }
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createKey(@RequestBody KeyRequest keyRequest) {
+    public ResponseEntity<AuthResponse> createKey(@RequestBody KeyRequest keyRequest) {
+        if (keyRequest == null || keyRequest.getOrganisationName() == null || keyRequest.getOrganisationName().isEmpty()) {
+            return ResponseEntity.ok().body(new AuthResponse(400, "Organisation name cannot be empty"));
+        }
+
         try {
             String generatedKey = authService.createKey(keyRequest.getOrganisationName());
-            return ResponseEntity.ok().body(generatedKey);
+            String message = "Key created successfully: " + generatedKey;
+            return ResponseEntity.ok().body(new AuthResponse(200, message));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create key: " + e.getMessage());
+            return ResponseEntity.ok().body(new AuthResponse(500, "Failed to create key: " + e.getMessage()));
         }
     }
-    
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteKeyByOrganisationId(@RequestBody OrganisationIdRequest organisationIdRequest) {
+    public ResponseEntity<AuthResponse> deleteKeyByOrganisationId(@RequestBody OrganisationIdRequest organisationIdRequest) {
+        if (organisationIdRequest == null || organisationIdRequest.getOrganisationId() == null || organisationIdRequest.getOrganisationId().isEmpty()) {
+            return ResponseEntity.ok().body(new AuthResponse(400, "Organisation ID cannot be empty"));
+        }
+
         boolean deleted = authService.deleteKeyByOrganisationId(organisationIdRequest.getOrganisationId());
         if (deleted) {
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(new AuthResponse(200, ""));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Key not found");
+            return ResponseEntity.ok().body(new AuthResponse(404, "Key not found"));
         }
     }
-  
+
     @GetMapping("/keys")
-    public ResponseEntity<?> getAllKeys() {
+    public ResponseEntity<AuthResponse> getAllKeys() {
         try {
             List<AuthKey> keys = authService.getAllKeys();
-            return ResponseEntity.ok().body(keys);
+            return ResponseEntity.ok().body(new AuthResponse(200, "", keys));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to retrieve keys: " + e.getMessage());
+            return ResponseEntity.ok().body(new AuthResponse(500, "Failed to retrieve keys: " + e.getMessage()));
         }
     }
 }

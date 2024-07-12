@@ -4,13 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -121,4 +124,30 @@ public class AuthServiceTest {
         assertEquals(keys, result);
         verify(authKeyRepository, times(1)).findAll();
     }
+    
+   
+  
+    @Test
+    void testValidateKey_InvalidKeyFormat() {
+        String invalidKey = "invalidKeyFormat";
+
+        when(authKeyRepository.findByKey(invalidKey)).thenReturn(null);
+
+        boolean isValid = authService.validateKey(invalidKey);
+
+        assertFalse(isValid);
+        verify(authKeyRepository, times(1)).findByKey(invalidKey);
+    }
+    
+    @Test
+    void testGetAllKeys_NoKeysPresent() {
+        when(authKeyRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<AuthKey> keys = authService.getAllKeys();
+
+        assertNotNull(keys);
+        assertEquals(0, keys.size());
+        verify(authKeyRepository, times(1)).findAll();
+    }
+
 }
