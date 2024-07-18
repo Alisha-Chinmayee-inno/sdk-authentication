@@ -1,5 +1,7 @@
 package com.locationguru.authentication.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,6 +23,7 @@ import com.locationguru.authentication.service.SyncService;
 @RequestMapping("/api/sync")
 public class SyncController {
 
+    private static final Logger logger = LoggerFactory.getLogger(SyncController.class);
     private final SyncService syncService;
 
     public void addCorsMappings(CorsRegistry registry) {
@@ -35,27 +38,28 @@ public class SyncController {
     public SyncController(SyncService syncService) {
         this.syncService = syncService;
     }
-    
+
     @PostMapping("/history")
     public ResponseEntity<SyncResponse> syncData(@RequestBody SyncRequest syncRequest) {
+        logger.info("syncData called with request: {}", syncRequest);
+
         if (syncRequest == null || (syncRequest.getLocations() == null && syncRequest.getGeofences() == null)) {
             throw new IllegalArgumentException("SyncRequest body must not be null and must contain locations or geofences");
         }
 
-        if ((syncRequest.getLocations() == null || syncRequest.getLocations().size() == 0) && (syncRequest.getGeofences() == null || syncRequest.getGeofences().size() == 0)) {
+        if ((syncRequest.getLocations() == null || syncRequest.getLocations().isEmpty()) && (syncRequest.getGeofences() == null || syncRequest.getGeofences().isEmpty())) {
             throw new IllegalArgumentException("SyncRequest must contain non-empty locations or geofences");
         }
 
         syncService.syncData(syncRequest);
 
-        // Return 200 OK with specific JSON body
         SyncResponse responseBody = new SyncResponse(200, "");
         return ResponseEntity.ok(responseBody);
     }
 
-
     @GetMapping("/history")
     public ResponseEntity<GetDataResponse> getData(@RequestParam(value = "historycount", required = false) Integer historyCount) {
+        logger.info("getData called with historycount: {}", historyCount);
         try {
             if (historyCount != null && historyCount <= 0) {
                 throw new IllegalArgumentException("historycount must be greater than 0");
@@ -66,11 +70,11 @@ public class SyncController {
             response.setMessage("");
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
+            logger.error("Error in getData: {}", ex.getMessage());
             GetDataResponse errorResponse = new GetDataResponse();
             errorResponse.setStatus(400); 
             errorResponse.setMessage(ex.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
-
 }

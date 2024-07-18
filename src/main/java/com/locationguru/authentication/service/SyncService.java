@@ -2,6 +2,8 @@ package com.locationguru.authentication.service;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +20,7 @@ import com.locationguru.authentication.response.GetDataResponse;
 @Service
 public class SyncService {
 
+    private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
     private final LocationRepository locationRepository;
     private final GeofenceRepository geofenceRepository;
 
@@ -29,6 +32,8 @@ public class SyncService {
 
     @Transactional
     public void syncData(SyncRequest syncRequest) {
+        logger.info("syncData called with request: {}", syncRequest);
+
         if (syncRequest.getLocations() != null) {
             syncRequest.getLocations().forEach(location -> {
                 if (location != null) {
@@ -46,16 +51,18 @@ public class SyncService {
     }
 
     public GetDataResponse getData(Integer historyCount) {
-        GetDataResponse response = new GetDataResponse();
+        logger.info("getData called with historycount: {}", historyCount);
 
+        GetDataResponse response = new GetDataResponse();
         Pageable pageable = PageRequest.of(0, historyCount != null && historyCount > 0 ? historyCount : 2000);
+
         List<Location> locations = historyCount != null && historyCount > 0 
                 ? locationRepository.findRecentEntriesWithHistoryCount(historyCount, pageable) 
                 : locationRepository.findRecentEntries(pageable);
         List<Geofence> geofences = historyCount != null && historyCount > 0 
                 ? geofenceRepository.findRecentEntriesWithHistoryCount(historyCount, pageable) 
                 : geofenceRepository.findRecentEntries(pageable);
-        
+
         response.setLocations(locations);
         response.setGeofences(geofences);
 
